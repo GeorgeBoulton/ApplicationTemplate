@@ -1,4 +1,4 @@
-\# .NET API Application Template
+# .NET API Application Template
 
 
 
