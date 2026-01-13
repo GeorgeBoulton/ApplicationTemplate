@@ -1,5 +1,6 @@
-[README.md](https://github.com/cko-recruitment/)
+\# .NET API Application Template
 
-Completed Checkout program. Pretty happy with it
 
-George Boulton
+
+This application follows a simple N-layer architecture with a good separation of concerns. The Domain has no knowledge that any other project exists. This is Domain Driven Design.
+

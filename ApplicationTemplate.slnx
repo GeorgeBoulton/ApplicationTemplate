@@ -6,6 +6,8 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="ApplicationTemplate.Api.UnitTests/ApplicationTemplate.Api.UnitTests.csproj" />
+    <Project Path="ApplicationTemplate.DAL.UnitTests/ApplicationTemplate.DAL.UnitTests.csproj" Id="e9160634-6c3d-4c17-a976-6d173ed387ec" />
+    <Project Path="ApplicationTemplate.Domain.UnitTests/ApplicationTemplate.Domain.UnitTests.csproj" Id="615f1a25-a682-4f53-a827-8e4d22723dca" />
   </Folder>
   <Project Path="ApplicationTemplate.Shared/ApplicationTemplate.Shared.csproj" />
 </Solution>
