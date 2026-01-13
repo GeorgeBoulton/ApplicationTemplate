@@ -1,3 +1,6 @@
+using ApplicationTemplate.Api;
+using ApplicationTemplate.Shared.Configuration;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -12,6 +15,18 @@ builder.Services.AddSwaggerGen();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
+
+// Add some basic injectable config. provided validation for URI.
+builder.Services
+    .AddOptions<ConfigOptions>()
+    .BindConfiguration(ConfigOptions.SectionName)
+    .ValidateDataAnnotations()
+    .Validate(o =>
+            Uri.IsWellFormedUriString(o.UpstreamService.BaseUri, UriKind.Absolute),
+        "UpstreamService:BaseUri must be a valid absolute URI")
+    .ValidateOnStart();
+
+builder.Services.AddServices();
 
 var app = builder.Build();
 
