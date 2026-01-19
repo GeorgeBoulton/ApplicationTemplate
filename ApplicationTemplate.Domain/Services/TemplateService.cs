@@ -1,3 +1,4 @@
+using System.Net;
 using ApplicationTemplate.Domain.Entities;
 using ApplicationTemplate.Shared;
 using ApplicationTemplate.Shared.Models;
@@ -11,6 +12,6 @@ public class TemplateService : ITemplateService
         // todo actually get this from some upstream bullshit. Need to setup both DB and upstream call
         var templateObject = new TemplateObject(id);
         
-        return new TryResult<TemplateObject>(null, false);
+        return new TryResult<TemplateObject>(null, false, HttpStatusCode.OK);
     }
 }

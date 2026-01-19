@@ -1,45 +1,84 @@
+using System.Net;
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
+using ApplicationTemplate.Shared.Models;
 
 namespace ApplicationTemplate.DAL.Clients;
 
 public class BaseClient(HttpClient httpClient) : IBaseClient
 {
-    public async Task<T> GetAsync<T>(Uri uri)
+    public async Task<TryResult<T>> GetAsync<T>(Uri uri, CancellationToken cancellationToken = default)
     {
-        return await SendAsync<T>(HttpMethod.Get, uri);
+        return await SendAsync<T>(HttpMethod.Get, uri, cancellationToken: cancellationToken);
     }
     
-    public async Task<TResponse> PostAsync<TRequest, TResponse>(Uri uri, TRequest request)
+    public async Task<TryResult<TResponse>> PostAsync<TRequest, TResponse>(
+        Uri uri,
+        TRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var json = JsonSerializer.Serialize(request);
-        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var content = JsonContent.Create(request);
 
-        return await SendAsync<TResponse>(HttpMethod.Post, uri, content);
+        return await SendAsync<TResponse>(HttpMethod.Post, uri, content, cancellationToken);
+    }
+    
+    public async Task<TryResult<TResponse>> PutAsync<TRequest, TResponse>(
+        Uri uri,
+        TRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var content = JsonContent.Create(request);
+
+        return await SendAsync<TResponse>(HttpMethod.Put, uri, content, cancellationToken);
     }
 
-    private async Task<T> SendAsync<T>(HttpMethod httpMethod, Uri uri, HttpContent? httpContent = null)
+    
+    public async Task<TryResult<T>> DeleteAsync<T>(Uri uri, CancellationToken cancellationToken = default)
     {
-        var request = new HttpRequestMessage(httpMethod, uri);
-        
-        if (httpMethod == HttpMethod.Post || httpMethod == HttpMethod.Put)
-        {
-            request.Content = httpContent ??
-                              throw new ArgumentException("Content must be provided for POST and PUT requests");
-        }
-        
-        var response = await httpClient.SendAsync(request);
+        return await SendAsync<T>(HttpMethod.Delete, uri, cancellationToken: cancellationToken);
+    }
 
-        if (response.IsSuccessStatusCode)
-        {
-            return await response.Content.ReadFromJsonAsync<T>() ?? default!;
-        }
+    private async Task<TryResult<T>> SendAsync<T>(
+        HttpMethod httpMethod,
+        Uri uri,
+        HttpContent? httpContent = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(httpMethod, uri);
+        
+        if (httpContent != null) request.Content = httpContent;
 
-        // Handle non-success status codes as needed
-        throw new HttpRequestException(
-            $"Request to {uri} failed with status code {response.StatusCode}",
-            null,
-            response.StatusCode);
+        try
+        {
+            using var response = await httpClient.SendAsync(request, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode == HttpStatusCode.NoContent)
+                {
+                    return new TryResult<T>(default, true, response.StatusCode);
+                }
+                
+                var content = await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken);
+            
+                return new TryResult<T>(content, true, response.StatusCode);
+
+            }
+
+            var errorResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+        
+            return new TryResult<T>(default, false, response.StatusCode, errorResponse);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException($"Request to {uri} timed out.");
+        }
+        catch (HttpRequestException e)
+        {
+            // e.StatusCode can be null (DNS failure etc.)
+            throw new HttpRequestException(
+                $"Request to {uri} failed{(e.StatusCode is { } sc ? $" with status code {(int)sc} ({sc})" : "")}.",
+                e,
+                e.StatusCode);
+        }
     }
 }

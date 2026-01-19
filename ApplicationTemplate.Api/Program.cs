@@ -22,7 +22,7 @@ builder.Services
     .BindConfiguration(ConfigOptions.SectionName)
     .ValidateDataAnnotations()
     .Validate(o =>
-            Uri.IsWellFormedUriString(o.UpstreamService.BaseUri, UriKind.Absolute),
+            Uri.IsWellFormedUriString(o.BankSimulatorService.BaseUri, UriKind.Absolute),
         "UpstreamService:BaseUri must be a valid absolute URI")
     .ValidateOnStart();
 
