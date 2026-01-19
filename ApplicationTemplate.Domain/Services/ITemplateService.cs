@@ -1,5 +1,6 @@
 using ApplicationTemplate.Domain.Entities;
 using ApplicationTemplate.Shared;
+using ApplicationTemplate.Shared.Models;
 
 namespace ApplicationTemplate.Domain.Services;
 
